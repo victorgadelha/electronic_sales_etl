@@ -13,7 +13,11 @@ def transform_data():
             first_purchase_date::DATE AS first_purchase_date, 
             last_purchase_date::DATE AS last_purchase_date,
             order_date::DATE AS order_date,
-            churn_flag::BOOLEAN AS churn_flag
+            churn_flag::BOOLEAN AS churn_flag,
+            YEAR(order_date::DATE) AS order_year,
+            MONTH(order_date::DATE) AS order_month,
+            QUARTER(order_date::DATE) AS order_quarter,
+            strftime(order_date::DATE, '%Y-%m') AS order_year_month
         """
     ).filter(
         """
