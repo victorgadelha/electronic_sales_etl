@@ -1,5 +1,5 @@
-import duckdb
 import os
+import duckdb
 
 
 def transform_data():
@@ -15,6 +15,16 @@ def transform_data():
         last_purchase_date::DATE AS last_purchase_date,
         order_date::DATE AS order_date,
         churn_flag::BOOLEAN AS churn_flag,
+        (quantity * unit_price)::DECIMAL(18,2) AS gross_revenue,
+        (quantity * unit_price * (1 - discount_pct))::DECIMAL(18,2) AS net_revenue,
+        CASE 
+            WHEN sub_category = 'Smartphones' THEN gross_revenue * 0.7
+            WHEN sub_category = 'Laptops' THEN gross_revenue * 0.6
+            ELSE gross_revenue * 0.5 
+        END::DECIMAL(18,2) AS cost_of_goods_sold,
+        (net_revenue - cost_of_goods_sold)::DECIMAL(18,2) AS gross_profit,
+        (gross_profit - operating_expenses)::DECIMAL(18,2) AS ebitda,
+        (ebitda - monthly_burn)::DECIMAL(18,2) AS net_income,
         YEAR(order_date::DATE) AS order_year,
         MONTH(order_date::DATE) AS order_month,
         QUARTER(order_date::DATE) AS order_quarter,
@@ -22,7 +32,7 @@ def transform_data():
     """
     )
 
-    regras_de_qualidade = """
+    quality_rules = """
         quantity > 0
         AND TRIM(customer_id) != ''
         AND TRIM(product_id) != ''
@@ -31,12 +41,12 @@ def transform_data():
         AND churn_flag IN (TRUE, FALSE)
     """
 
-    silver_data = base_silver.filter(regras_de_qualidade)
+    silver_data = base_silver.filter(quality_rules)
 
     silver_data.write_parquet("data/silver/electronics_sales_cleaned.parquet")
     print("Dados VÁLIDOS salvos na Silver.")
 
-    quarantine_data = base_silver.filter(f"NOT COALESCE({regras_de_qualidade}, FALSE)")
+    quarantine_data = base_silver.filter(f"NOT COALESCE({quality_rules}, FALSE)")
 
     quarantine_data.write_parquet("data/quarantine/rejeitados_silver.parquet")
     print("Dados INVÁLIDOS salvos na Quarentena.")
