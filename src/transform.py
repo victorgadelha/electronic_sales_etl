@@ -1,5 +1,5 @@
-import os
 import duckdb
+import os
 
 
 def transform_data():
@@ -50,6 +50,8 @@ def transform_data():
 
     quarantine_data.write_parquet("data/quarantine/rejeitados_silver.parquet")
     print("Dados INVÁLIDOS salvos na Quarentena.")
+
+    silver_data.show()
 
 
 if __name__ == "__main__":
